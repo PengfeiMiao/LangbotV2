@@ -1,12 +1,12 @@
 version: "3"
 
 services:
-
   langbot_plugin_runtime:
     image: rockchin/langbot:latest
     container_name: langbot_plugin_runtime
     volumes:
       - ./data/plugins:/app/data/plugins
+      - /root/data/downloads:/app/files
     ports:
       - 5401:5401
     restart: on-failure
@@ -17,11 +17,14 @@ services:
       - langbot_network
 
   langbot:
-    image: rockchin/langbot:latest
+    build:
+      context: ..
+#    image: rockchin/langbot:latest
     container_name: langbot
     volumes:
       - ./data:/app/data
       - ./plugins:/app/plugins
+      - /root/data/downloads:/app/files
     restart: on-failure
     environment:
       - TZ=Asia/Shanghai

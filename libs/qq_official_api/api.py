@@ -163,7 +163,55 @@ class QQOfficialClient:
         content_type = attachment.get('content_type', '')
         return content_type.startswith('image/')
 
-    async def send_private_text_msg(self, user_openid: str, content: str, msg_id: str):
+    async def upload_private_image(self, user_openid: str, image_url: str):
+        """上传私聊图片"""
+        if not await self.check_access_token():
+            await self.get_access_token()
+
+        url = self.base_url + '/v2/users/' + user_openid + '/files'
+        async with httpx.AsyncClient() as client:
+            headers = {
+                'Authorization': f'QQBot {self.access_token}',
+                'Content-Type': 'application/json',
+            }
+            data = {
+                'file_type': 1,
+                'url': image_url,
+                'srv_send_msg': False,
+            }
+            response = await client.post(url, headers=headers, json=data)
+            response_data = response.json()
+            if response.status_code == 200:
+                return response_data
+            else:
+                await self.logger.error(f'上传私聊图片失败: {response_data}')
+                raise ValueError({'openid': user_openid, 'data': data, 'response': response_data})
+
+    async def upload_group_image(self, group_openid: str, image_url: str):
+        """上传群聊图片"""
+        if not await self.check_access_token():
+            await self.get_access_token()
+
+        url = self.base_url + '/v2/groups/' + group_openid + '/files'
+        async with httpx.AsyncClient() as client:
+            headers = {
+                'Authorization': f'QQBot {self.access_token}',
+                'Content-Type': 'application/json',
+            }
+            data = {
+                'file_type': 1,
+                'url': image_url,
+                'srv_send_msg': False,
+            }
+            response = await client.post(url, headers=headers, json=data)
+            response_data = response.json()
+            if response.status_code == 200:
+                return response_data
+            else:
+                await self.logger.error(f'上传群聊图片失败: {response_data}')
+                raise ValueError({'openid': group_openid, 'data': data, 'response': response_data})
+
+    async def send_private_text_msg(self, user_openid: str, content: str, msg_id: str, media: dict = None):
         """发送私聊消息"""
         if not await self.check_access_token():
             await self.get_access_token()
@@ -176,8 +224,9 @@ class QQOfficialClient:
             }
             data = {
                 'content': content,
-                'msg_type': 0,
+                'msg_type': 7 if media else 0,
                 'msg_id': msg_id,
+                'media': media,
             }
             response = await client.post(url, headers=headers, json=data)
             response_data = response.json()
@@ -185,9 +234,9 @@ class QQOfficialClient:
                 return
             else:
                 await self.logger.error(f'发送私聊消息失败: {response_data}')
-                raise ValueError(response)
+                raise ValueError({'openid': user_openid, 'data': data, 'response': response_data})
 
-    async def send_group_text_msg(self, group_openid: str, content: str, msg_id: str):
+    async def send_group_text_msg(self, group_openid: str, content: str, msg_id: str, media: dict = None):
         """发送群聊消息"""
         if not await self.check_access_token():
             await self.get_access_token()
@@ -200,8 +249,9 @@ class QQOfficialClient:
             }
             data = {
                 'content': content,
-                'msg_type': 0,
+                'msg_type': 7 if media else 0,
                 'msg_id': msg_id,
+                'media': media,
             }
             response = await client.post(url, headers=headers, json=data)
             if response.status_code == 200:

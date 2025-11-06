@@ -4,6 +4,7 @@ import asyncio
 import traceback
 
 import datetime
+import mimetypes
 
 import langbot_plugin.api.definition.abstract.platform.adapter as abstract_platform_adapter
 import langbot_plugin.api.entities.builtin.platform.message as platform_message
@@ -27,6 +28,19 @@ class QQOfficialMessageConverter(abstract_platform_adapter.AbstractMessageConver
                     {
                         'type': 'text',
                         'content': msg.text,
+                    }
+                )
+            if type(msg) is platform_message.Image:
+                filename = msg.url.split('/')[-1]
+                content_list.append(
+                    {
+                        'type': 'image',
+                        'content': '',
+                        'attachments': [{
+                            'content_type': mimetypes.guess_type(filename)[0],
+                            'filename': filename,
+                            'url': msg.url,
+                        }]
                     }
                 )
 
@@ -172,6 +186,18 @@ class QQOfficialAdapter(abstract_platform_adapter.AbstractMessagePlatformAdapter
                         qq_official_event.d_id,
                     )
 
+                if content['type'] == 'image':
+                    media = await self.bot.upload_private_image(
+                        qq_official_event.user_openid,
+                        content['attachments'][0]['url'],
+                    )
+                    await self.bot.send_private_text_msg(
+                        qq_official_event.user_openid,
+                        '',
+                        qq_official_event.d_id,
+                        media=media,
+                    )
+
         # 群聊消息
         if qq_official_event.t == 'GROUP_AT_MESSAGE_CREATE':
             for content in content_list:
@@ -180,6 +206,18 @@ class QQOfficialAdapter(abstract_platform_adapter.AbstractMessagePlatformAdapter
                         qq_official_event.group_openid,
                         content['content'],
                         qq_official_event.d_id,
+                    )
+
+                if content['type'] == 'image':
+                    media = await self.bot.upload_group_image(
+                        qq_official_event.group_openid,
+                        content['attachments'][0]['url'],
+                    )
+                    await self.bot.send_group_text_msg(
+                        qq_official_event.group_openid,
+                        '',
+                        qq_official_event.d_id,
+                        media=media,
                     )
 
         # 频道群聊

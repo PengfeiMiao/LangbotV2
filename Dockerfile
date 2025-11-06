@@ -6,7 +6,7 @@ COPY web ./web
 
 RUN cd web && npm install && npm run build
 
-FROM python:3.12.7-slim
+FROM python:3.12.7
 
 WORKDIR /app
 
@@ -14,10 +14,8 @@ COPY . .
 
 COPY --from=node /app/web/out ./web/out
 
-RUN apt update \
-    && apt install gcc -y \
-    && python -m pip install --no-cache-dir uv \
-    && uv sync \
+RUN python -m pip install --no-cache-dir uv -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    && uv sync --index-url https://pypi.tuna.tsinghua.edu.cn/simple \
     && touch /.dockerenv
 
 CMD [ "uv", "run", "main.py" ]
