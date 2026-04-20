@@ -25,7 +25,7 @@ dependencies = [
     "mcp>=1.8.1",
     "nakuru-project-idk>=0.0.2.1",
     "ollama>=0.4.8",
-    "openai>1.0.0",
+    "openai>=2.32.0",
     "pillow>=11.2.1",
     "psutil>=7.0.0",
     "pycryptodome>=3.22.0",
